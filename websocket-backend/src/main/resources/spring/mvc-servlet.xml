@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:p="http://www.springframework.org/schema/p"
+       xmlns:websocket="http://www.springframework.org/schema/websocket"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans.xsd
+http://www.springframework.org/schema/context
+http://www.springframework.org/schema/context/spring-context.xsd
+http://www.springframework.org/schema/mvc
+http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd
+http://www.springframework.org/schema/websocket
+        http://www.springframework.org/schema/websocket/spring-websocket.xsd
+        ">
+
+    <context:component-scan base-package="com.wondersgroup.hs.net.*"/>
+
+    <!--To enable @RequestMapping process on type level and method level -->
+    <mvc:annotation-driven>
+        <mvc:message-converters register-defaults="true">
+            <bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+                <!--<property name="objectMapper">-->
+                <!--<bean class="com.oritsh.dbUtils.mssql.procedure.utils.jacksonAdaptor.JsonHelper"-->
+                <!--factory-method="objectMapper"/>-->
+                <!--</property>-->
+            </bean>
+        </mvc:message-converters>
+    </mvc:annotation-driven>
+
+
+    <mvc:resources mapping="/static/**" location="/static/"/>
+
+    <websocket:handlers>
+        <websocket:mapping path="/bridge" handler="webSocketBridge"/>
+        <websocket:handshake-interceptors>
+            <bean class="org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor"/>
+        </websocket:handshake-interceptors>
+    </websocket:handlers>
+
+    <bean id="webSocketBridge" class="com.wondersgroup.hs.net.wsocks5.handler.WebSocketBridge"/>
+
+
+    <bean id="viewResolver"
+          class="org.springframework.web.servlet.view.InternalResourceViewResolver"
+          p:prefix="/WEB-INF/pages/"
+          p:suffix=".jsp"/>
+</beans>
