@@ -9,6 +9,7 @@
         <module>socks5-frontend</module>
         <module>websocket-backend</module>
         <module>echo-server</module>
+        <module>abstract-socks5-proxy</module>
     </modules>
     <packaging>pom</packaging>
 
