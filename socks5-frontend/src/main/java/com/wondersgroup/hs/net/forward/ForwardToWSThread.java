@@ -1,4 +1,4 @@
-package com.wondersgroup.hs.net;
+package com.wondersgroup.hs.net.forward;
 
 import org.java_websocket.client.WebSocketClient;
 
@@ -20,6 +20,8 @@ public class ForwardToWSThread extends Thread {
 
     InputStream in;
     OutputStream out;
+
+
 
     private byte[] buffer = new byte[409600];
 

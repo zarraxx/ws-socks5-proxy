@@ -1,4 +1,4 @@
-package com.wondersgroup.hs.net;
+package com.wondersgroup.hs.net.forward;
 
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_17;
@@ -48,6 +48,7 @@ public class WSForwardClient extends WebSocketClient {
     public void onError(Exception e) {
         try {
             socket.close();
+            this.close();
         } catch (IOException ee) {
             ee.printStackTrace();
         }

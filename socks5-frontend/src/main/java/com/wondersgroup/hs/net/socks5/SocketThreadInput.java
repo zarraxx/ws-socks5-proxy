@@ -1,4 +1,4 @@
-package com.wondersgroup.hs.net;
+package com.wondersgroup.hs.net.socks5;
 
 /**
  * Created by xiashenpin on 15/9/26.
