@@ -35,7 +35,7 @@ http://www.springframework.org/schema/websocket
 
     <websocket:handlers allowed-origins="*">
         <websocket:mapping path="/bridge" handler="webSocketBridge"/>
-
+        <websocket:mapping path="/echo" handler="echo"/>
     </websocket:handlers>
 
     <!--<websocket:handlers>-->
@@ -50,6 +50,8 @@ http://www.springframework.org/schema/websocket
         <property name="socks5ProxyPort" value="1181"/>
     </bean>
 
+    <bean id="echo" class="com.wondersgroup.hs.net.wsocks5.handler.EchoHandler">
+    </bean>
 
 
     <bean id="viewResolver"

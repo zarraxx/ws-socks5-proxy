@@ -1,10 +1,7 @@
 package com.wondersgroup.hs.net.netty;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -22,10 +19,15 @@ public class NettyClient {
     ChannelFuture f = null;
 
     boolean running = false;
+    boolean showLog = true;
     String host;
     int port;
 
     HandlerFactory factory;
+
+    protected  ChannelHandlerAdapter[] getHandlers(){
+        return getFactory().createHandler();
+    }
 
     public HandlerFactory getFactory() {
         return factory;
@@ -60,6 +62,14 @@ public class NettyClient {
         this.running = running;
     }
 
+    public boolean isShowLog() {
+        return showLog;
+    }
+
+    public void setShowLog(boolean showLog) {
+        this.showLog = showLog;
+    }
+
     public void connect(String host, int port){
         if (!host.equals(this.host))
             setHost(host);
@@ -75,26 +85,28 @@ public class NettyClient {
              .handler(new ChannelInitializer<SocketChannel>() {
                  @Override
                  protected void initChannel(SocketChannel ch) throws Exception {
-                     ch.pipeline().addLast(
-                             new LoggingHandler(LogLevel.INFO)
-                             );
-                     ch.pipeline().addLast(getFactory().createHandler());
+                     if (isShowLog()) {
+                         ch.pipeline().addLast(
+                                 new LoggingHandler(LogLevel.INFO)
+                         );
+                     }
+                     ch.pipeline().addLast(getHandlers());
                  }
              });
              f = b.connect(host,port).sync();
 
-            new Thread(new Runnable() {
-                public void run() {
-                    try {
-                        logger.info("echo server start...");
-                        f.channel().closeFuture().sync();
-                    } catch (InterruptedException var2) {
-                        logger.info("InterruptedException");
-                        var2.printStackTrace();
-                    }
-
-                }
-            }).start();
+//            new Thread(new Runnable() {
+//                public void run() {
+//                    try {
+//                        logger.info("echo server start...");
+//                        f.channel().closeFuture().sync();
+//                    } catch (InterruptedException var2) {
+//                        logger.info("InterruptedException");
+//                        var2.printStackTrace();
+//                    }
+//
+//                }
+//            }).start();
 
             running = true;
 
@@ -117,6 +129,10 @@ public class NettyClient {
         }
 
         running = false;
+    }
+
+    public Channel getChannel(){
+        return f.channel();
     }
 
 }

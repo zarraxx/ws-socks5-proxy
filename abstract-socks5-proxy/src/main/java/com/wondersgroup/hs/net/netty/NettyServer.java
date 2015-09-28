@@ -71,7 +71,7 @@ public class NettyServer {
 
             f = b.bind(port).sync();
             running = true;
-            new Thread(new Runnable() {
+            Thread thread = new Thread(new Runnable() {
                 public void run() {
                     try {
                         logger.info("server start...");
@@ -83,7 +83,8 @@ public class NettyServer {
                     }
 
                 }
-            }).start();
+            });
+            //thread.start();
 
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -107,5 +108,9 @@ public class NettyServer {
             this.workerGroup.shutdownGracefully();
         }
         running = false;
+    }
+
+    public Channel getChannel(){
+        return f.channel();
     }
 }

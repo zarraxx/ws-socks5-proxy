@@ -1,37 +1,35 @@
 package com.wondersgroup.hs.net.netty;
 
-import io.netty.channel.ChannelHandlerAdapter;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.*;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.codec.http.websocketx.*;
-import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketClientCompressionHandler;
-import io.netty.handler.codec.http2.Http2OrHttpChooser;
-import io.netty.handler.codec.http2.Http2SecurityUtil;
-import io.netty.handler.ssl.ApplicationProtocolConfig;
+
 import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SupportedCipherSuiteFilter;
+import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 import javax.net.ssl.SSLException;
 import java.net.URI;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by zarra on 15/9/28.
  */
-public class NettyWebSocketClient extends NettyClient implements HandlerFactory{
+public class NettyWebSocketClient extends NettyClient {
 
     URI uri;
 
     SslContext sslCtx;
 
-    WebSocketClientHandshaker handshaker;
-
     WebSocketClientHandler handler;
 
-    HandlerFactory webSocketfactory;
 
     public NettyWebSocketClient(){
-        super.setFactory(this);
+
 
     }
 
@@ -61,18 +59,20 @@ public class NettyWebSocketClient extends NettyClient implements HandlerFactory{
 
             if (ssl) {
                 try {
-                    sslCtx = SslContext.newClientContext(null,
-                            null, InsecureTrustManagerFactory.INSTANCE, Http2SecurityUtil.CIPHERS,
-                    /* NOTE: the following filter may not include all ciphers required by the HTTP/2 specification
-                     * Please refer to the HTTP/2 specification for cipher requirements. */
-                            SupportedCipherSuiteFilter.INSTANCE,
-                            new ApplicationProtocolConfig(
-                                    ApplicationProtocolConfig.Protocol.ALPN,
-                                    ApplicationProtocolConfig.SelectorFailureBehavior.CHOOSE_MY_LAST_PROTOCOL,
-                                    ApplicationProtocolConfig.SelectedListenerFailureBehavior.CHOOSE_MY_LAST_PROTOCOL,
-                                    Http2OrHttpChooser.SelectedProtocol.HTTP_2.protocolName(),
-                                    Http2OrHttpChooser.SelectedProtocol.HTTP_1_1.protocolName()),
-                            0, 0);
+//                    sslCtx = SslContext.newClientContext(null,
+//                            null, InsecureTrustManagerFactory.INSTANCE, Http2SecurityUtil.CIPHERS,
+//                    /* NOTE: the following filter may not include all ciphers required by the HTTP/2 specification
+//                     * Please refer to the HTTP/2 specification for cipher requirements. */
+//                            SupportedCipherSuiteFilter.INSTANCE,
+//                            new ApplicationProtocolConfig(
+//                                    ApplicationProtocolConfig.Protocol.ALPN,
+//                                    ApplicationProtocolConfig.SelectorFailureBehavior.CHOOSE_MY_LAST_PROTOCOL,
+//                                    ApplicationProtocolConfig.SelectedListenerFailureBehavior.CHOOSE_MY_LAST_PROTOCOL,
+//                                    Http2OrHttpChooser.SelectedProtocol.HTTP_2.protocolName(),
+//                                    Http2OrHttpChooser.SelectedProtocol.HTTP_1_1.protocolName()),
+//                            0, 0);
+                    sslCtx = SslContextBuilder.forClient()
+                            .trustManager(InsecureTrustManagerFactory.INSTANCE).build();
                 } catch (SSLException e) {
                     sslCtx = null;
                 }
@@ -90,51 +90,57 @@ public class NettyWebSocketClient extends NettyClient implements HandlerFactory{
 
         handler = createWebSockethandler();
 
-        connect(getHost(),getPort());
+        connect(getHost(), getPort());
 
-        handler.handshakeFuture().sync();
+       handler.handshakeFuture().sync();
 
     }
 
-    protected  WebSocketClientHandler createWebSockethandler(){
+    protected WebSocketClientHandler createWebSockethandler(){
         WebSocketClientHandshaker handshaker = WebSocketClientHandshakerFactory.newHandshaker(
                 uri, WebSocketVersion.V13, null, false, new DefaultHttpHeaders());
         WebSocketClientHandler handler =
-                new WebSocketClientHandler(handshaker) {
-                    @Override
-                    protected void onOpen() {
-
-                    }
-
-                    @Override
-                    protected void onClose() {
-
-                    }
-
-                    @Override
-                    protected void onTextFrame(TextWebSocketFrame frame) {
-
-                    }
-
-                    @Override
-                    protected void onBinaryFrame(BinaryWebSocketFrame frame) {
-
-                    }
-
-                    @Override
-                    protected void onPongFrame(PongWebSocketFrame frame) {
-
-                    }
-                };
+                new WebSocketClientHandler(handshaker) ;
 
         return handler;
     }
 
     @Override
-    public ChannelHandlerAdapter[] createHandler() {
-        return new ChannelHandlerAdapter[]{ new HttpClientCodec(),
-                new HttpObjectAggregator(8192),
-                new WebSocketClientCompressionHandler(),
-                handler};
+    protected ChannelHandlerAdapter[] getHandlers() {
+
+        List<ChannelHandler> result = new LinkedList<ChannelHandler>();
+        result.add( new HttpClientCodec());
+        result.add(new HttpObjectAggregator(8192));
+        result.add(getHandler());
+        result.add(new ChannelOutboundHandlerAdapter(){
+            @Override
+            public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+                if (msg instanceof ByteBuf) {
+                    ByteBuf byteBuf = (ByteBuf) msg;
+                    WebSocketFrame frame = new BinaryWebSocketFrame(byteBuf);
+                    ctx.write(frame, promise);
+                    return;
+                } else if (msg instanceof String) {
+                    String text = (String) msg;
+                    //logger.info("write:" + text + " to server");
+                    WebSocketFrame frame = new TextWebSocketFrame(text);
+                    ctx.write(frame, promise);
+                    return;
+                } else {
+                    super.write(ctx, msg, promise);
+                }
+
+            }
+        });
+        for (ChannelHandlerAdapter handlerAdapter:getFactory().createHandler()){
+            result.add(handlerAdapter);
+        }
+        return result.toArray(new ChannelHandlerAdapter[0]);
     }
+
+    public WebSocketClientHandler getHandler(){
+        return handler;
+    }
+
+
 }

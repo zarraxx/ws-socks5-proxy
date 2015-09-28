@@ -16,7 +16,7 @@
       var sock = new WebSocket(url);
       sock.onopen = function() {
         console.log('open');
-        //sock.send([])
+        sock.send("abcdefg")
       };
       sock.onmessage = function(e) {
         console.log('message', e.data);
@@ -28,7 +28,7 @@
       return sock;
     }
 
-    createConnect('ws://218.80.1.144:18000/proxy2/bridge')
+    createConnect('ws://localhost:8088/echo')
 
     //sock.send('test');
     //sock.close();
