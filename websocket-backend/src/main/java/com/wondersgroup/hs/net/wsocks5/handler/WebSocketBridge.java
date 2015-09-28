@@ -47,6 +47,7 @@ public class WebSocketBridge extends BinaryWebSocketHandler {
         super.afterConnectionEstablished(session);
         Map<String,Object> attributes = session.getAttributes();
         Socket socket = new Socket(getSocks5ProxyIP(),getSocks5ProxyPort());
+        logger.info("open socket:"+getSocks5ProxyIP()+":"+getSocks5ProxyPort());
         attributes.put(KEYSocketToRealSocks5Server,socket);
         ReadSocketToWSThread thread = new ReadSocketToWSThread(socket.getInputStream(),session);
         attributes.put(KEYThread,thread);
@@ -72,9 +73,11 @@ public class WebSocketBridge extends BinaryWebSocketHandler {
 
     @Override
     protected void handleBinaryMessage(WebSocketSession session, BinaryMessage message) throws Exception {
-        super.handleBinaryMessage(session, message);
+        logger.info("handleBinaryMessage");
+        //super.handleBinaryMessage(session, message);
         ByteBuffer bf = message.getPayload();
         int size = bf.remaining();
+        logger.info("get buffer size:"+size);
         byte[] buffer = new byte[size];
         bf.get(buffer,0,size);
         Socket socket = (Socket) session.getAttributes().get(KEYSocketToRealSocks5Server);

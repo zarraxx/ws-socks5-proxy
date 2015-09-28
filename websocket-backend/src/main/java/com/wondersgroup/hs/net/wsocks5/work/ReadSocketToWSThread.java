@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -35,19 +36,30 @@ public class ReadSocketToWSThread extends Thread {
 
     public void run() {
         try {
-            int len;
+            int len = 0;
             setRunning(true);
-            while (  running && (len = in.read(buffer)) != -1) {
+            while (  running &&  (len = in.read(buffer)) != -1) {
                 if (len > 0) {
                     //System.out.println(new String(buffer, 0, len));
-                    BinaryMessage bm = new BinaryMessage(buffer,0,len,false);
+                    BinaryMessage bm = new BinaryMessage(buffer,0,len,true);
+                    logger.info("send "+len +" bytes");
                     session.sendMessage(bm);
+
                     //osIn.write(buffer, 0, len);
                     //osIn.flush();
                 }
             }
+            if (len == -1)
+                logger.info("remote disconnect");
+            session.close();
         } catch (Exception e) {
-            //System.out.println("SocketThreadInput leave");
+            e.printStackTrace();
+        }finally {
+            try {
+                session.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

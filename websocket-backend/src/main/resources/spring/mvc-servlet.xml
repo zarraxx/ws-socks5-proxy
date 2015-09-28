@@ -32,14 +32,24 @@ http://www.springframework.org/schema/websocket
 
     <mvc:resources mapping="/static/**" location="/static/"/>
 
-    <websocket:handlers>
+
+    <websocket:handlers allowed-origins="*">
         <websocket:mapping path="/bridge" handler="webSocketBridge"/>
-        <websocket:handshake-interceptors>
-            <bean class="org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor"/>
-        </websocket:handshake-interceptors>
+
     </websocket:handlers>
 
-    <bean id="webSocketBridge" class="com.wondersgroup.hs.net.wsocks5.handler.WebSocketBridge"/>
+    <!--<websocket:handlers>-->
+        <!--<websocket:mapping path="/bridge" handler="webSocketBridge"/>-->
+        <!--<websocket:handshake-interceptors>-->
+            <!--<bean class="org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor"/>-->
+        <!--</websocket:handshake-interceptors>-->
+    <!--</websocket:handlers>-->
+
+    <bean id="webSocketBridge" class="com.wondersgroup.hs.net.wsocks5.handler.WebSocketBridge">
+        <property name="socks5ProxyIP" value="127.0.0.1"/>
+        <property name="socks5ProxyPort" value="1181"/>
+    </bean>
+
 
 
     <bean id="viewResolver"

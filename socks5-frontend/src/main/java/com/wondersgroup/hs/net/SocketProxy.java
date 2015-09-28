@@ -1,23 +1,24 @@
 package com.wondersgroup.hs.net;
 
-import java.io.IOException;
+/**
+ * Created by xiashenpin on 15/9/26.
+ */
 import java.net.ServerSocket;
 import java.net.Socket;
 
-/**
- * Hello world!
- *
- */
-public class App 
-{
-    public static void main( String[] args ) throws IOException {
-        ServerSocket serverSocket = new ServerSocket(4321);
+public class SocketProxy {
+    /**
+     * @param args
+     */
+    public static void main(String[] args) throws Exception {
+        ServerSocket serverSocket = new ServerSocket(1234);
         while (true) {
             Socket socket = null;
             try {
                 socket = serverSocket.accept();
 //                new SocketThread(socket).start();
-                new EchoServiceThread(socket).start();
+                System.out.println();
+                new ForwardToWSThread(socket).start();
             } catch (Exception e) {
                 e.printStackTrace();
             }
