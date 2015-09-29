@@ -7,10 +7,10 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>abstract-socks5-proxy</artifactId>
+    <artifactId>netty-socks5-proxy</artifactId>
     <packaging>jar</packaging>
 
-    <name>abstract-socks5-proxy</name>
+    <name>netty-socks5-proxy</name>
     <url>http://maven.apache.org</url>
 
     <properties>
@@ -23,23 +23,10 @@
             <artifactId>junit</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- logger -->
         <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.5</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>1.7.12</version>
-            <scope>runtime</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-all</artifactId>
-            <version>4.0.31.Final</version>
+            <groupId>com.wondersgroup.hs.net</groupId>
+            <artifactId>netty-utils</artifactId>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 </project>

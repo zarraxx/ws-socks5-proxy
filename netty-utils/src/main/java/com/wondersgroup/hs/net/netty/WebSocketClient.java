@@ -10,27 +10,25 @@ import io.netty.handler.codec.http.websocketx.*;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
+
 import javax.net.ssl.SSLException;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Created by zarra on 15/9/28.
+ * Created by zarra on 15/9/29.
  */
-public class NettyWebSocketClient extends NettyClient {
-
+public class WebSocketClient extends Client {
     URI uri;
 
     SslContext sslCtx;
 
     WebSocketClientHandler handler;
 
-
-    public NettyWebSocketClient(){
-
-
+    public WebSocketClient(URI uri,HandlerFactory factory){
+        setUri(uri);
+        setFactory(factory);
     }
 
     public URI getUri() {
@@ -59,6 +57,9 @@ public class NettyWebSocketClient extends NettyClient {
 
             if (ssl) {
                 try {
+
+                    sslCtx = SslContextBuilder.forClient()
+                            .trustManager(InsecureTrustManagerFactory.INSTANCE).build();
 //                    sslCtx = SslContext.newClientContext(null,
 //                            null, InsecureTrustManagerFactory.INSTANCE, Http2SecurityUtil.CIPHERS,
 //                    /* NOTE: the following filter may not include all ciphers required by the HTTP/2 specification
@@ -71,8 +72,6 @@ public class NettyWebSocketClient extends NettyClient {
 //                                    Http2OrHttpChooser.SelectedProtocol.HTTP_2.protocolName(),
 //                                    Http2OrHttpChooser.SelectedProtocol.HTTP_1_1.protocolName()),
 //                            0, 0);
-                    sslCtx = SslContextBuilder.forClient()
-                            .trustManager(InsecureTrustManagerFactory.INSTANCE).build();
                 } catch (SSLException e) {
                     sslCtx = null;
                 }
@@ -90,13 +89,21 @@ public class NettyWebSocketClient extends NettyClient {
 
         handler = createWebSockethandler();
 
-        connect(getHost(), getPort());
+        connect(getHost(),getPort());
 
-       handler.handshakeFuture().sync();
+        handler.handshakeFuture().sync();
 
     }
 
-    protected WebSocketClientHandler createWebSockethandler(){
+    public void connect(){
+        try {
+            connect(getUri());
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected  WebSocketClientHandler createWebSockethandler(){
         WebSocketClientHandshaker handshaker = WebSocketClientHandshakerFactory.newHandshaker(
                 uri, WebSocketVersion.V13, null, false, new DefaultHttpHeaders());
         WebSocketClientHandler handler =
@@ -106,41 +113,35 @@ public class NettyWebSocketClient extends NettyClient {
     }
 
     @Override
-    protected ChannelHandlerAdapter[] getHandlers() {
-
-        List<ChannelHandler> result = new LinkedList<ChannelHandler>();
-        result.add( new HttpClientCodec());
-        result.add(new HttpObjectAggregator(8192));
-        result.add(getHandler());
-        result.add(new ChannelOutboundHandlerAdapter(){
+    protected ChannelHandler[] getHandlers() {
+        List<ChannelHandler> channelHandlers = new LinkedList<>();
+        channelHandlers.add(new HttpClientCodec());
+        channelHandlers.add(new HttpObjectAggregator(8192));
+        //new WebSocketClientCompressionHandler(),
+        channelHandlers.add(handler);
+        channelHandlers.add(new ChannelOutboundHandlerAdapter(){
             @Override
             public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-                if (msg instanceof ByteBuf) {
-                    ByteBuf byteBuf = (ByteBuf) msg;
-                    WebSocketFrame frame = new BinaryWebSocketFrame(byteBuf);
-                    ctx.write(frame, promise);
-                    return;
-                } else if (msg instanceof String) {
+                if (msg instanceof String){
+
                     String text = (String) msg;
-                    //logger.info("write:" + text + " to server");
-                    WebSocketFrame frame = new TextWebSocketFrame(text);
-                    ctx.write(frame, promise);
-                    return;
-                } else {
+                    logger.info("client send:"+text);
+                    TextWebSocketFrame frame = new TextWebSocketFrame(text);
+                    ctx.write(frame,promise);
+                }else if (msg instanceof ByteBuf){
+                    ByteBuf byteBuf = (ByteBuf) msg;
+                    BinaryWebSocketFrame frame = new BinaryWebSocketFrame(byteBuf);
+                    ctx.write(frame,promise);
+                }else {
                     super.write(ctx, msg, promise);
                 }
-
             }
         });
-        for (ChannelHandlerAdapter handlerAdapter:getFactory().createHandler()){
-            result.add(handlerAdapter);
-        }
-        return result.toArray(new ChannelHandlerAdapter[0]);
-    }
+        if (getFactory()!= null)
+            channelHandlers.addAll(getFactory().createHandler());
 
-    public WebSocketClientHandler getHandler(){
-        return handler;
-    }
+        return channelHandlers.toArray(new ChannelHandler[0]);
 
+    }
 
 }

@@ -10,6 +10,8 @@
         <module>websocket-backend</module>
         <module>echo-server</module>
         <module>abstract-socks5-proxy</module>
+        <module>netty-socks5-proxy</module>
+        <module>netty-utils</module>
     </modules>
     <packaging>pom</packaging>
 

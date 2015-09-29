@@ -7,14 +7,15 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>abstract-socks5-proxy</artifactId>
+    <artifactId>netty-utils</artifactId>
     <packaging>jar</packaging>
 
-    <name>abstract-socks5-proxy</name>
+    <name>netty-utils</name>
     <url>http://maven.apache.org</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <jetty-version>9.2.7.v20150116</jetty-version>
     </properties>
 
     <dependencies>
@@ -39,7 +40,28 @@
         <dependency>
             <groupId>io.netty</groupId>
             <artifactId>netty-all</artifactId>
-            <version>4.0.31.Final</version>
+            <version>4.1.0.Beta6</version>
+        </dependency>
+
+        <!-- To write basic javax.websocket against -->
+        <dependency>
+            <groupId>javax.websocket</groupId>
+            <artifactId>javax.websocket-api</artifactId>
+            <version>1.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.eclipse.jetty.websocket</groupId>
+            <artifactId>javax-websocket-server-impl</artifactId>
+            <version>${jetty-version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- To run javax.websocket client -->
+        <dependency>
+            <groupId>org.eclipse.jetty.websocket</groupId>
+            <artifactId>javax-websocket-client-impl</artifactId>
+            <version>${jetty-version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 </project>
