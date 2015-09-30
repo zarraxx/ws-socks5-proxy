@@ -2,10 +2,7 @@ package com.wondersgroup.hs.net;
 
 import com.wondersgroup.hs.net.netty.HandlerFactory;
 import com.wondersgroup.hs.net.netty.WebSocketClient;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.*;
 import io.netty.handler.logging.LogLevel;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -15,6 +12,8 @@ import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainer
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 
@@ -26,10 +25,14 @@ import java.util.List;
  */
 public class WebSocketTest {
 
+    Logger logger = LoggerFactory.getLogger(WebSocketTest.class);
+
     Server server ;
     ServerConnector connector ;
 
     int port = 8123;
+
+    ChannelPromise readPromise;
 
     @Before
     public void setupServer() throws Exception {
@@ -72,7 +75,9 @@ public class WebSocketTest {
 
             @Override
             public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-                super.channelRead(ctx, msg);
+                logger.info("recevie from server:"+msg);
+                if (readPromise!=null)
+                    readPromise.setSuccess();
             }
         };
         WebSocketClient webSocketClient = new WebSocketClient(uri, new HandlerFactory() {
@@ -82,16 +87,17 @@ public class WebSocketTest {
             }
         });
 
-        webSocketClient.setLogLevel(LogLevel.ERROR);
+        webSocketClient.setLogLevel(LogLevel.DEBUG);
 
         webSocketClient.connect();
 
 
         Channel channel = webSocketClient.getChannelFuture().channel();
 
+        readPromise = channel.newPromise();
         channel.write("Hello world");
 
-        Thread.sleep(2000);
+        readPromise.sync();
 
 
     }

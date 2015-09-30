@@ -127,11 +127,11 @@ public class WebSocketClient extends Client {
                     String text = (String) msg;
                     logger.info("client send:"+text);
                     TextWebSocketFrame frame = new TextWebSocketFrame(text);
-                    ctx.write(frame,promise);
+                    ctx.writeAndFlush(frame, promise);
                 }else if (msg instanceof ByteBuf){
                     ByteBuf byteBuf = (ByteBuf) msg;
                     BinaryWebSocketFrame frame = new BinaryWebSocketFrame(byteBuf);
-                    ctx.write(frame,promise);
+                    ctx.writeAndFlush(frame,promise);
                 }else {
                     super.write(ctx, msg, promise);
                 }

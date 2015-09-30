@@ -32,8 +32,8 @@ public class EventSocket
 
     @OnMessage
     public void onWebSocketText(String message) throws IOException {
-        logger.info("!!!!!Received TEXT message: " + message);
-        session.getBasicRemote().sendText(message);
+        logger.info("Received TEXT message: " + message);
+        session.getBasicRemote().sendText("you send:"+message);
     }
 
     @OnClose
