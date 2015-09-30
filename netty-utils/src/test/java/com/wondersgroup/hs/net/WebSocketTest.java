@@ -4,12 +4,14 @@ import com.wondersgroup.hs.net.netty.HandlerFactory;
 import com.wondersgroup.hs.net.netty.WebSocketClient;
 import io.netty.channel.*;
 import io.netty.handler.logging.LogLevel;
+import io.netty.util.AttributeKey;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.websocket.jsr356.server.ServerContainer;
 import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -32,7 +34,30 @@ public class WebSocketTest {
 
     int port = 8123;
 
-    ChannelPromise readPromise;
+    final static AttributeKey<ChannelPromise> ReadPromiseKey = AttributeKey.valueOf("readPromise");
+
+
+    class PrintTextAdapter extends ChannelInboundHandlerAdapter{
+        @Override
+        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+            super.channelActive(ctx);
+        }
+
+        @Override
+        public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+            super.channelInactive(ctx);
+        }
+
+        @Override
+        public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+            logger.info("recevie from server:" + msg);
+            ChannelPromise promise = ctx.channel().attr(ReadPromiseKey).get();
+            Assert.assertNotNull(promise);
+            if (promise!=null) {
+                promise.setSuccess();
+            }
+        }
+    }
 
     @Before
     public void setupServer() throws Exception {
@@ -62,24 +87,8 @@ public class WebSocketTest {
     public void socksProxyTest() throws InterruptedException {
         String urlString = String.format("ws://localhost:%d/events/",port);
         URI uri = URI.create(urlString);
-        final ChannelInboundHandlerAdapter adapter = new ChannelInboundHandlerAdapter(){
-            @Override
-            public void channelActive(ChannelHandlerContext ctx) throws Exception {
-                super.channelActive(ctx);
-            }
+        final ChannelInboundHandlerAdapter adapter = new PrintTextAdapter();
 
-            @Override
-            public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-                super.channelInactive(ctx);
-            }
-
-            @Override
-            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-                logger.info("recevie from server:"+msg);
-                if (readPromise!=null)
-                    readPromise.setSuccess();
-            }
-        };
         WebSocketClient webSocketClient = new WebSocketClient(uri, new HandlerFactory() {
             @Override
             public List<ChannelHandler> createHandler() {
@@ -94,10 +103,14 @@ public class WebSocketTest {
 
         Channel channel = webSocketClient.getChannelFuture().channel();
 
-        readPromise = channel.newPromise();
+        ChannelPromise promise = channel.newPromise();
+
+        channel.attr(ReadPromiseKey).set(promise);
+
+        //readPromise = ;
         channel.write("Hello world");
 
-        readPromise.sync();
+        promise.sync();
 
 
     }
